@@ -1,13 +1,33 @@
 extends CharacterBody3D
 
+var damage = 10
+const MAX_CAM_SHAKE = 0.05
 
-const SPEED = 5.0
-const JUMP_VELOCITY = 4.5
+var currentspeed = 0
+var SPEED = 7.5
+var AIRSPEED = 6.0
+var JUMP_VELOCITY = 4.5
+var sens = 0.00075
 
-# Get the gravity from the project settings to be synced with RigidBody nodes.
-var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
+var gravity = 15
 @onready var neck := $Neck
 @onready var camera := $Neck/Camera3D
+@onready var anim_player = $AnimationPlayer
+@onready var camera1 = $Neck/Camera3D
+@onready var raycast = $Neck/Camera3D/RayCast3D
+
+func fire ():
+	if Input.is_action_pressed("fire"):
+		if not anim_player.is_playing():
+			camera1.position = lerp(camera.position, Vector3(randf_range(MAX_CAM_SHAKE, -MAX_CAM_SHAKE), randf_range(MAX_CAM_SHAKE, -MAX_CAM_SHAKE), 0), 0.5)
+			if raycast.is_colliding():
+				var target = raycast.get_collider()
+				if target.is_in_group("Enemy"):
+					target.health -= damage
+		anim_player.play("ARFire")
+	else:
+		anim_player.stop
+		camera1.position = Vector3(0, 0, 0)
 
 func _unhandled_input(event: InputEvent):
 	if event is InputEventMouseButton:
@@ -16,17 +36,20 @@ func _unhandled_input(event: InputEvent):
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
 		if event is InputEventMouseMotion:
-			neck.rotate_y(-event.relative.x * 0.01)
-			camera.rotate_x(-event.relative.y * 0.01)
+			neck.rotate_y(-event.relative.x * sens)
+			camera.rotate_x(-event.relative.y * sens)
 			camera.rotation.x = clamp(camera.rotation.x, deg_to_rad(-90), deg_to_rad(90))
 
 func _physics_process(delta):
+	
+	fire()
+	
 	# Add the gravity.
 	if not is_on_floor():
 		velocity.y -= gravity * delta
 
 	# Handle jump.
-	if Input.is_action_just_pressed("ui_accept") and is_on_floor():
+	if Input.is_action_pressed("ui_accept") and is_on_floor():
 		velocity.y = JUMP_VELOCITY
 
 	# Get the input direction and handle the movement/deceleration.
@@ -37,7 +60,21 @@ func _physics_process(delta):
 		velocity.x = direction.x * SPEED
 		velocity.z = direction.z * SPEED
 	else:
-		velocity.x = move_toward(velocity.x, 0, SPEED)
-		velocity.z = move_toward(velocity.z, 0, SPEED)
+		velocity.x *= 0.65
+		velocity.z *= 0.65
+	
+	
+	#if direction and is_on_floor() and not Input.is_action_pressed("jump"):
+		#velocity.x = direction.x * SPEED
+		#velocity.z = direction.z * SPEED
+	#elif direction and is_on_floor() and Input.is_action_pressed("jump"):
+		#velocity.z = direction.z * AIRSPEED
+		#velocity.z = direction.z * AIRSPEED
+	#elif direction and not is_on_floor() and Input.is_action_pressed("jump"):
+		#velocity.x = direction.x * AIRSPEED
+		#velocity.z = direction.z * AIRSPEED
+	#elif not direction and not Input.is_action_pressed("jump"):
+		#velocity.x *= 0.65
+		#velocity.z *= 0.65
 
 	move_and_slide()
