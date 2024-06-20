@@ -1,7 +1,7 @@
 extends CharacterBody3D
 
 var gravity = 15
-var health = 20
+var health = 50
 
 func _physics_process(delta):
 	# Add the gravity.
@@ -14,3 +14,4 @@ func _process(delta):
 		queue_free()
 
 	move_and_slide()
+
