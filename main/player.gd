@@ -6,10 +6,10 @@ var currentspeed = 0
 var SPEED = 7.5
 var fasterspeed = 10
 var AIRSPEED = 0.1
-var JUMP_VELOCITY = 4.5
+var JUMP_VELOCITY = 6
 var sens = 0.00075
 #var sens = 0.005
-var gravity = 15
+var gravity = 20
 var health = 200
 
 @onready var neck := $Neck
@@ -35,22 +35,17 @@ func fire ():
 		camera1.position = Vector3(0, 0, 0)
 
 func _unhandled_input(event: InputEvent):
-	if event is InputEventMouseButton:
-		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-	elif event.is_action_pressed("ui_cancel"):
-		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
-	if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
-		if event is InputEventMouseMotion:
-			neck.rotate_y(-event.relative.x * sens)
-			camera.rotate_x(-event.relative.y * sens)
-			camera.rotation.x = clamp(camera.rotation.x, deg_to_rad(-90), deg_to_rad(90))
+	if event is InputEventMouseMotion:
+		neck.rotate_y(-event.relative.x * sens)
+		camera.rotate_x(-event.relative.y * sens)
+		camera.rotation.x = clamp(camera.rotation.x, deg_to_rad(-90), deg_to_rad(90))
 
 func _process(delta):
 	
 	if health <= 0:
 		queue_free()
 	
-	if position.y < -100:
+	if position.y < -100 or Input.is_action_just_pressed("ui_cancel"):
 		get_tree().quit()
 	
 	fire()
